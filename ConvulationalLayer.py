@@ -20,28 +20,27 @@ class ConvulationalLayer:
         result = []
 
         try:
-            padding = int(self.padding_calc(input))
-            input = np.pad(input, ((padding, padding), (padding, padding), (0, 0)), mode='constant', constant_values=0)
-
-            output_height = (input.shape[0] - self.filter_size) // self.stride + 1
-            output_width = (input.shape[1] - self.filter_size) // self.stride + 1
+            padding = self.padding_calc(input)
+            input_padded= np.pad(input, ((int(padding[0]), int(padding[0])), (int(padding[1]), int(padding[1])), (0, 0)), mode='constant', constant_values=0)
 
             for filter in self.filters:
                 output = np.zeros((input.shape[0],input.shape[1]))
-                for i in range(output_height):
-                    for j in range(output_width):
+                for i in range(input_padded.shape[0]):
+                    for j in range(input_padded.shape[1]):
 
-                        if i * self.stride + self.filter_size >= input.shape[0]:
-                            break
-                        if j * self.stride + self.filter_size >= input.shape[1]:
-                            break
+                        if i * self.stride + self.filter_size >= input_padded.shape[0]:
+                            continue 
 
-                        window = input[
-                            i * self.stride : i * self.stride + self.filter_size,
-                            j * self.stride : j * self.stride + self.filter_size,
-                            :
+                        if j * self.stride + self.filter_size >= input_padded.shape[1]:
+                            continue 
+
+                        window = input_padded[
+                        i * self.stride : i * self.stride + self.filter_size,
+                        j * self.stride : j * self.stride + self.filter_size,
+                        :
                         ]
-                        output[i,j] = np.sum(window*filter)
+                        output[i, j] = np.sum(window * filter)
+
                 result.append(output)
 
             result = np.stack(result, axis=-1)
@@ -51,4 +50,4 @@ class ConvulationalLayer:
 
 
     def padding_calc(self,input):
-        return np.floor((((input.shape[0] - 1)*self.stride) - input.shape[0] + self.filter_size )/2)
+        return (np.floor(((self.stride*(input.shape[0] - 1)) - input.shape[0] + self.filter_size)/2) , np.floor(((self.stride*(input.shape[1] - 1)) - input.shape[1] + self.filter_size)/2))
